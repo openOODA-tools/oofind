@@ -1,0 +1,52 @@
+// # Render JSON - Machine-Readable Output Formatter
+//
+// Logline: Formats found entries as newline-delimited JSON objects for tooling and agents.
+//
+// Setup: Pure JSON string generation. Escapes special characters deterministically.
+//
+// Beats:
+//   1. Escape quotes, backslashes, and control characters for JSON strings.
+//   2. Format single found entry into JSON object record.
+//   3. Stream formatted JSON records to standard output.
+
+import "walk/found_entry.oo";
+
+pub fn json_escape(s: String) -> String {
+    let n: Int = chars_len(s);
+    let mut out: String = "";
+    let mut i: Int = 0;
+    while i < n {
+        let c: String = char_at(s, i);
+        if c == "\\" {
+            out = out + "\\\\";
+        } else if c == "\"" {
+            out = out + "\\\"";
+        } else if c == "\n" {
+            out = out + "\\n";
+        } else if c == "\r" {
+            out = out + "\\r";
+        } else if c == "\t" {
+            out = out + "\\t";
+        } else {
+            out = out + c;
+        }
+        i = i + 1;
+    }
+    return out;
+}
+
+pub fn render_entry_json(entry: FoundEntry) -> String {
+    let kind: String = if entry.is_symlink { "symlink" } else if entry.is_dir { "dir" } else { "file" };
+    return "{\"path\":\"" + json_escape(entry.path) + "\",\"name\":\"" + json_escape(entry.name) + "\",\"type\":\"" + kind + "\",\"size\":" + to_string(entry.size) + ",\"depth\":" + to_string(entry.depth) + "}";
+}
+
+pub fn render_entries_json(entries: List[FoundEntry]) -> Int {
+    let n: Int = list_len(entries);
+    let mut i: Int = 0;
+    while i < n {
+        let entry: FoundEntry = list_get(entries, i);
+        print(render_entry_json(entry) + "\n");
+        i = i + 1;
+    }
+    return n;
+}

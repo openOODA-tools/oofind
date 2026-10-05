@@ -1,0 +1,8 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: oofind
+Upstream-Contact: openOODA-tools <ops@openooda.org>
+Source: https://github.com/openOODA-tools/oofind
+
+Files: *
+Copyright: 2026 openOODA-tools
+License: Apache-2.0

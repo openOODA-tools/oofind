@@ -1,0 +1,136 @@
+// # MCP Stdio Server - Agent File Finding Engine
+//
+// Logline: Speaks Model Context Protocol over stdio for LLM coding agents.
+//
+// Setup: Requires FsReadCap. Dispatches find tool calls and lists capabilities.
+//
+// Beats:
+//   1. Handle initialize and notifications/initialized lifecycle handshakes.
+//   2. Advertise find_files and find_entries tools with schema definitions.
+//   3. Dispatch tools/call requests and return formatted search results.
+
+import "walk/found_entry.oo";
+import "walk/walk_tree.oo";
+import "match/find_criteria.oo";
+import "match/filter_entry.oo";
+import "render/render_json.oo";
+import "json_field.oo";
+
+fn build_error(id: String, code: Int, msg: String) -> String {
+    return "{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"error\":{\"code\":" + to_string(code) + ",\"message\":\"" + json_escape(msg) + "\"}}";
+}
+
+fn build_tool_result(id: String, text: String) -> String {
+    return "{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"" + json_escape(text) + "\"}]}}";
+}
+
+fn handle_tool_call(fs: &FsReadCap, id: String, req: String) -> String {
+    let params: String = json_field_raw(req, "params");
+    let tool_name: String = json_field_string(params, "name");
+    let args: String = json_field_raw(params, "arguments");
+
+    if tool_name == "find_files" {
+        let root_arg: String = json_field_string(args, "root");
+        let root: String = if chars_len(root_arg) == 0 { "." } else { root_arg };
+        let pattern: String = json_field_string(args, "pattern");
+        let ext: String = json_field_string(args, "extension");
+        let typ: String = json_field_string(args, "type");
+
+        let mut crit: FindCriteria = find_criteria_default();
+        crit.name_pattern = pattern;
+        crit.extension = ext;
+        crit.type_filter = typ;
+
+        let all_entries: List[FoundEntry] = walk_hierarchy(fs, root, 999999, true, false);
+        let matched: List[FoundEntry] = filter_entries(crit, all_entries);
+
+        let mut out: String = "";
+        let n: Int = list_len(matched);
+        let mut i: Int = 0;
+        while i < n {
+            let entry: FoundEntry = list_get(matched, i);
+            out = out + entry.path + "\n";
+            i = i + 1;
+        }
+        return build_tool_result(id, out);
+    }
+
+    if tool_name == "find_entries" {
+        let root_arg: String = json_field_string(args, "root");
+        let root: String = if chars_len(root_arg) == 0 { "." } else { root_arg };
+        let pattern: String = json_field_string(args, "pattern");
+
+        let mut crit: FindCriteria = find_criteria_default();
+        crit.name_pattern = pattern;
+
+        let all_entries: List[FoundEntry] = walk_hierarchy(fs, root, 999999, true, false);
+        let matched: List[FoundEntry] = filter_entries(crit, all_entries);
+
+        let mut out: String = "";
+        let n: Int = list_len(matched);
+        let mut i: Int = 0;
+        while i < n {
+            let entry: FoundEntry = list_get(matched, i);
+            out = out + render_entry_json(entry) + "\n";
+            i = i + 1;
+        }
+        return build_tool_result(id, out);
+    }
+
+    return build_error(id, -32601, "unknown tool: " + tool_name);
+}
+
+fn handle_mcp_request(fs: &FsReadCap, req: String) -> String {
+    let method: String = json_field_string(req, "method");
+    let raw_id: String = json_field_raw(req, "id");
+    let id: String = if chars_len(raw_id) == 0 { "null" } else { raw_id };
+
+    if method == "initialize" {
+        return "{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":{\"protocolVersion\":\"2024-11-05\",\"capabilities\":{\"tools\":{}},\"serverInfo\":{\"name\":\"oofind\",\"version\":\"0.1.0\"}}}";
+    }
+    if method == "notifications/initialized" {
+        return "";
+    }
+    if method == "tools/list" {
+        return "{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":{\"tools\":[{\"name\":\"find_files\",\"description\":\"Find files in directory tree\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"root\":{\"type\":\"string\"},\"pattern\":{\"type\":\"string\"},\"extension\":{\"type\":\"string\"},\"type\":{\"type\":\"string\"}}}},{\"name\":\"find_entries\",\"description\":\"Find filesystem entries with metadata\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"root\":{\"type\":\"string\"},\"pattern\":{\"type\":\"string\"}}}}]}}";
+    }
+    if method == "tools/call" {
+        return handle_tool_call(fs, id, req);
+    }
+    if method == "shutdown" {
+        return "{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":null}";
+    }
+    return build_error(id, -32601, "method not found: " + method);
+}
+
+pub fn run_mcp_server(fs: &FsReadCap) -> Int {
+    let mut buf: String = "";
+    let mut running: Bool = true;
+    while running {
+        let mut nl: Int = str_index_of(buf, "\n");
+        while nl >= 0 {
+            let line: String = str_trim(str_slice(buf, 0, nl));
+            buf = str_slice(buf, nl + 1, chars_len(buf));
+            if chars_len(line) > 0 {
+                let resp: String = handle_mcp_request(fs, line);
+                if chars_len(resp) > 0 {
+                    println(resp);
+                }
+            }
+            nl = str_index_of(buf, "\n");
+        }
+
+        let cr: Result[String, String] = oo_read_stdin_chunk(fs, 100);
+        if !cr.is_ok() {
+            running = false;
+        } else {
+            let chunk: String = match cr { Ok(s) => s, Err(_) => "" };
+            if chars_len(chunk) == 0 {
+                running = false;
+            } else {
+                buf = buf + chunk;
+            }
+        }
+    }
+    return 0;
+}

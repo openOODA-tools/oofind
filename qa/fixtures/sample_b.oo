@@ -1,0 +1,16 @@
+// # Fixture B - Sample Test File
+//
+// Logline: Provides a valid openOODA source file for regression testing.
+//
+// Setup: Pure fixture.
+//
+// Beats:
+//   1. Define sample constant.
+//   2. Define sample dummy function.
+//   3. Return sample integer.
+
+pub fn fixture_sample() -> Int {
+    let mut x: Int = 10;
+    x = x + 20;
+    return x;
+}

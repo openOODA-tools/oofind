@@ -1,0 +1,88 @@
+// # Filter Entry - Predicate Evaluation on Found Entries
+//
+// Logline: Applies search criteria predicates to candidate filesystem entries.
+//
+// Setup: Pure predicate evaluator. Compares found entry fields against criteria.
+//
+// Beats:
+//   1. Check depth bounds and hidden status.
+//   2. Check type, extension, and pattern matching constraints.
+//   3. Check size limits and empty criteria to admit or reject entry.
+
+import "walk/found_entry.oo";
+import "find_criteria.oo";
+import "name_matcher.oo";
+
+pub fn match_entry(criteria: FindCriteria, entry: FoundEntry) -> Bool {
+    if entry.depth < criteria.min_depth {
+        return false;
+    }
+    if entry.depth > criteria.max_depth {
+        return false;
+    }
+
+    if !criteria.hidden && found_entry_is_hidden(entry) {
+        return false;
+    }
+
+    if chars_len(criteria.type_filter) > 0 {
+        if criteria.type_filter == "f" && entry.is_dir {
+            return false;
+        }
+        if criteria.type_filter == "d" && !entry.is_dir {
+            return false;
+        }
+        if criteria.type_filter == "l" && !entry.is_symlink {
+            return false;
+        }
+    }
+
+    if chars_len(criteria.extension) > 0 {
+        let ext: String = extract_extension(entry.name);
+        if ext != criteria.extension {
+            return false;
+        }
+    }
+
+    if chars_len(criteria.name_pattern) > 0 {
+        if !match_name_glob(criteria.name_pattern, entry.name) {
+            return false;
+        }
+    }
+
+    if chars_len(criteria.iname_pattern) > 0 {
+        if !match_iname_glob(criteria.iname_pattern, entry.name) {
+            return false;
+        }
+    }
+
+    if criteria.empty_only {
+        if !entry.is_dir && entry.size != 0 {
+            return false;
+        }
+    }
+
+    if criteria.min_size >= 0 && entry.size < criteria.min_size {
+        return false;
+    }
+
+    if criteria.max_size >= 0 && entry.size > criteria.max_size {
+        return false;
+    }
+
+    return true;
+}
+
+pub fn filter_entries(criteria: FindCriteria, entries: List[FoundEntry]) -> List[FoundEntry] {
+    let mut out: List[FoundEntry] = list_new();
+    let n: Int = list_len(entries);
+    let mut i: Int = 0;
+    while i < n {
+        let entry: FoundEntry = list_get(entries, i);
+        if match_entry(criteria, entry) {
+            out = list_push(out, entry);
+        }
+        i = i + 1;
+    }
+    return out;
+}

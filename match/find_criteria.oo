@@ -1,0 +1,38 @@
+// # Find Criteria Specification - Search Predicates Model
+//
+// Logline: Encapsulates filtering predicates applied to candidate filesystem entries.
+//
+// Setup: Pure value type. Populated by argument parser and consumed by match engine.
+//
+// Beats:
+//   1. Define FindCriteria struct holding name, type, size, and depth constraints.
+//   2. Provide constructor helper initializing default permissive criteria.
+//   3. Provide predicate configuration helper functions.
+
+pub type FindCriteria = struct {
+    name_pattern: String,
+    iname_pattern: String,
+    type_filter: String,
+    extension: String,
+    min_depth: Int,
+    max_depth: Int,
+    min_size: Int,
+    max_size: Int,
+    empty_only: Bool,
+    hidden: Bool
+};
+
+pub fn find_criteria_default() -> FindCriteria {
+    return FindCriteria {
+        name_pattern: "",
+        iname_pattern: "",
+        type_filter: "",
+        extension: "",
+        min_depth: 0,
+        max_depth: 999999,
+        min_size: -1,
+        max_size: -1,
+        empty_only: false,
+        hidden: false
+    };
+}

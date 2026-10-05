@@ -1,0 +1,146 @@
+// # Walk Tree - Recursive Directory Traversal Engine
+//
+// Logline: Recursively traverses directory hierarchies collecting found entry records.
+//
+// Setup: Requires FsReadCap. Respects max depth bounds, gitignore rules, and hidden policies.
+//
+// Beats:
+//   1. Classify root operand as single file or directory hierarchy.
+//   2. Recursively inspect directory entries with symlink loop protection.
+//   3. Accumulate and return found entry records in deterministic traversal order.
+
+import "std/fs/os/fs.oo";
+import "found_entry.oo";
+import "symlink_guard.oo";
+import "gitignore.oo";
+
+fn is_builtin_pruned(name: String) -> Bool {
+    return name == ".git" || name == ".ooda-cache" || name == "node_modules" || name == "target" || name == "dist" || name == "__pycache__" || name == ".venv";
+}
+
+fn join_child_path(base: String, name: String) -> String {
+    if chars_len(base) == 0 { return name; }
+    if str_ends_with(base, "/") { return base + name; }
+    return base + "/" + name;
+}
+
+fn append_entries(acc: List[FoundEntry], more: List[FoundEntry]) -> List[FoundEntry] {
+    let mut out: List[FoundEntry] = acc;
+    let n: Int = list_len(more);
+    let mut i: Int = 0;
+    while i < n {
+        out = list_push(out, list_get(more, i));
+        i = i + 1;
+    }
+    return out;
+}
+
+fn append_rules(acc: List[IgnoreRule], more: List[IgnoreRule]) -> List[IgnoreRule] {
+    let mut out: List[IgnoreRule] = acc;
+    let n: Int = list_len(more);
+    let mut i: Int = 0;
+    while i < n {
+        out = list_push(out, list_get(more, i));
+        i = i + 1;
+    }
+    return out;
+}
+
+fn is_entry_hidden(name: String) -> Bool {
+    if chars_len(name) > 1 && char_at(name, 0) == "." {
+        return true;
+    }
+    return false;
+}
+
+fn walk_dir_recursive(
+    fs: &FsReadCap,
+    dir: String,
+    depth: Int,
+    max_depth: Int,
+    respect_ignore: Bool,
+    include_hidden: Bool,
+    rules: List[IgnoreRule]
+) -> List[FoundEntry] {
+    let mut out: List[FoundEntry] = list_new();
+    if depth > max_depth {
+        return out;
+    }
+
+    let local_rules: List[IgnoreRule] = if respect_ignore {
+        append_rules(rules, load_gitignore(fs, dir))
+    } else {
+        rules
+    };
+
+    let entries: List[String] = fs_read_dir(fs, dir);
+    let n: Int = list_len(entries);
+    let mut i: Int = 0;
+    while i < n {
+        let name: String = list_get(entries, i);
+        if name != "." && name != ".." && chars_len(name) > 0 {
+            let child_path: String = join_child_path(dir, name);
+            let is_hidden: Bool = is_entry_hidden(name);
+            let skip_hidden: Bool = !include_hidden && is_hidden;
+
+            if !skip_hidden {
+                let is_dir: Bool = fs_is_dir(fs, child_path);
+                let is_sym: Bool = if is_dir { is_directory_symlink(fs, child_path) } else { false };
+                let ignored: Bool = if respect_ignore {
+                    is_builtin_pruned(name) || ignore_hit(local_rules, child_path, is_dir)
+                } else {
+                    false
+                };
+
+                if !ignored {
+                    let sz: Int = if is_dir { 0 } else { fs_file_size(fs, child_path) };
+                    let entry: FoundEntry = found_entry_new(child_path, name, is_dir, is_sym, sz, depth);
+                    out = list_push(out, entry);
+
+                    if is_dir && !is_sym && depth < max_depth {
+                        let sub_results: List[FoundEntry] = walk_dir_recursive(
+                            fs, child_path, depth + 1, max_depth, respect_ignore, include_hidden, local_rules
+                        );
+                        out = append_entries(out, sub_results);
+                    }
+                }
+            }
+        }
+        i = i + 1;
+    }
+    return out;
+}
+
+pub fn walk_hierarchy(
+    fs: &FsReadCap,
+    root: String,
+    max_depth: Int,
+    respect_ignore: Bool,
+    include_hidden: Bool
+) -> List[FoundEntry] {
+    let mut results: List[FoundEntry] = list_new();
+    let sz: Int = fs_file_size(fs, root);
+    if sz < 0 {
+        return results;
+    }
+
+    let is_dir: Bool = fs_is_dir(fs, root);
+    if !is_dir {
+        let entry: FoundEntry = found_entry_new(root, root, false, false, sz, 0);
+        return list_push(results, entry);
+    }
+
+    let is_sym: Bool = is_directory_symlink(fs, root);
+    let root_entry: FoundEntry = found_entry_new(root, root, true, is_sym, 0, 0);
+    results = list_push(results, root_entry);
+
+    if !is_sym && max_depth >= 1 {
+        let base_rules: List[IgnoreRule] = list_new();
+        let children: List[FoundEntry] = walk_dir_recursive(
+            fs, root, 1, max_depth, respect_ignore, include_hidden, base_rules
+        );
+        results = append_entries(results, children);
+    }
+
+    return results;
+}

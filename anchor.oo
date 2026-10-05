@@ -1,0 +1,16 @@
+// # oofind Root Anchor
+//
+// Logline: Top-level subsystem map uniting walk, match, render, and ipc domains.
+//
+// Setup: Pure shim. Re-exports all subsystem anchors for the oofind tool.
+//
+// Beats:
+//   1. Re-export walk traversal subsystem.
+//   2. Re-export match filtering subsystem.
+//   3. Re-export render output subsystem.
+//   4. Re-export ipc protocol subsystem.
+
+import "walk/anchor.oo";
+import "match/anchor.oo";
+import "render/anchor.oo";
+import "ipc/anchor.oo";

@@ -1,0 +1,14 @@
+// # Match Subsystem Anchor
+//
+// Logline: Subsystem map re-exporting filtering predicates and criteria matching.
+//
+// Setup: Pure shim. Re-exports find criteria, name matching, and entry filtering.
+//
+// Beats:
+//   1. Re-export criteria configuration structures.
+//   2. Re-export pattern and extension matching primitives.
+//   3. Re-export entry evaluation and list filtering engine.
+
+import "find_criteria.oo";
+import "name_matcher.oo";
+import "filter_entry.oo";

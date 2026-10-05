@@ -1,0 +1,38 @@
+// # Found Entry Record - File System Entry Representation
+//
+// Logline: Models a single file, directory, or symlink discovered during traversal.
+//
+// Setup: Pure value type. Populated by the tree walker with path metadata.
+//
+// Beats:
+//   1. Define FoundEntry struct with path, classification, size, and depth.
+//   2. Provide constructor helper initializing an entry record.
+//   3. Provide helper to inspect entry attributes.
+
+pub type FoundEntry = struct {
+    path: String,
+    name: String,
+    is_dir: Bool,
+    is_symlink: Bool,
+    size: Int,
+    depth: Int
+};
+
+pub fn found_entry_new(path: String, name: String, is_dir: Bool, is_symlink: Bool, size: Int, depth: Int) -> FoundEntry {
+    return FoundEntry {
+        path: path,
+        name: name,
+        is_dir: is_dir,
+        is_symlink: is_symlink,
+        size: size,
+        depth: depth
+    };
+}
+
+pub fn found_entry_is_hidden(entry: FoundEntry) -> Bool {
+    let n: Int = chars_len(entry.name);
+    if n > 1 && char_at(entry.name, 0) == "." {
+        return true;
+    }
+    return false;
+}

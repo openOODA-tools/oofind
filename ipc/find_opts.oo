@@ -1,0 +1,40 @@
+// # Find Options Specification - Invocation State Model
+//
+// Logline: Encapsulates command line parameters, operational modes, and criteria.
+//
+// Setup: Pure value type. Constructed by argument parsing and passed to main dispatch.
+//
+// Beats:
+//   1. Define FindOpts struct containing root paths, criteria, and display flags.
+//   2. Provide constructor helper with safe defaults.
+//   3. Provide accessor functions for option inspection.
+
+import "match/find_criteria.oo";
+
+pub type FindOpts = struct {
+    roots: List[String],
+    criteria: FindCriteria,
+    respect_ignore: Bool,
+    print_null: Bool,
+    json_output: Bool,
+    exit_code_mode: Bool,
+    help_mode: Bool,
+    version_mode: Bool,
+    mcp_mode: Bool,
+    error_msg: String
+};
+
+pub fn find_opts_default() -> FindOpts {
+    return FindOpts {
+        roots: list_new(),
+        criteria: find_criteria_default(),
+        respect_ignore: true,
+        print_null: false,
+        json_output: false,
+        exit_code_mode: false,
+        help_mode: false,
+        version_mode: false,
+        mcp_mode: false,
+        error_msg: ""
+    };
+}

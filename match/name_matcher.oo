@@ -1,0 +1,68 @@
+// # Name Matcher - Filename and Pattern Evaluation
+//
+// Logline: Evaluates globs, case-insensitive patterns, and file extensions.
+//
+// Setup: Pure string predicates using standard library glob matching.
+//
+// Beats:
+//   1. Provide case folding for ASCII and standard characters.
+//   2. Extract file extension from basename.
+//   3. Match candidate names against globs and extension constraints.
+
+import "std/fs/file/glob.oo";
+
+pub fn to_lower_char(c: String) -> String {
+    let b: Int = byte_at(c, 0);
+    if b >= 65 && b <= 90 {
+        let mut bs: List[Int] = bytes_new();
+        bs = bytes_push(bs, b + 32);
+        return bytes_to_str(bs);
+    }
+    return c;
+}
+
+pub fn to_lower_str(s: String) -> String {
+    let n: Int = chars_len(s);
+    let mut out: String = "";
+    let mut i: Int = 0;
+    while i < n {
+        out = out + to_lower_char(char_at(s, i));
+        i = i + 1;
+    }
+    return out;
+}
+
+pub fn extract_extension(name: String) -> String {
+    let n: Int = chars_len(name);
+    let mut i: Int = n - 1;
+    while i >= 0 {
+        let c: String = char_at(name, i);
+        if c == "." {
+            if i > 0 && i < n - 1 {
+                return str_slice(name, i + 1, n);
+            }
+            return "";
+        }
+        if c == "/" {
+            return "";
+        }
+        i = i - 1;
+    }
+    return "";
+}
+
+pub fn match_name_glob(pattern: String, name: String) -> Bool {
+    if chars_len(pattern) == 0 {
+        return true;
+    }
+    return glob_matches(pattern, name);
+}
+
+pub fn match_iname_glob(pattern: String, name: String) -> Bool {
+    if chars_len(pattern) == 0 {
+        return true;
+    }
+    let lower_pat: String = to_lower_str(pattern);
+    let lower_name: String = to_lower_str(name);
+    return glob_matches(lower_pat, lower_name);
+}

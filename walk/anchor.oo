@@ -1,0 +1,15 @@
+// # Walk Subsystem Anchor
+//
+// Logline: Subsystem map re-exporting traversal and entry ingestion interfaces.
+//
+// Setup: Pure shim. Re-exports found entry records and tree walking functions.
+//
+// Beats:
+//   1. Re-export found entry record and constructors.
+//   2. Re-export symlink guard and gitignore filters.
+//   3. Re-export recursive tree traversal engine.
+
+import "found_entry.oo";
+import "symlink_guard.oo";
+import "gitignore.oo";
+import "walk_tree.oo";

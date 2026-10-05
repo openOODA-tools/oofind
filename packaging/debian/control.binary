@@ -1,0 +1,10 @@
+Package: oofind
+Version: 0.1.0-1
+Section: utils
+Priority: optional
+Architecture: amd64
+Maintainer: openOODA-tools <ops@openooda.org>
+Description: Capability-bounded file finding utility
+ A capability-bounded file finding utility written in pure openOODA,
+ featuring fast recursive traversal, glob matching, JSON output
+ streaming, and an agent-native MCP stdio surface.

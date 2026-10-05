@@ -1,0 +1,14 @@
+// # Render Subsystem Anchor
+//
+// Logline: Subsystem map re-exporting stream formatting and help rendering.
+//
+// Setup: Pure shim. Re-exports path rendering, JSON Lines, and help formatting.
+//
+// Beats:
+//   1. Re-export delimiter formatting and NUL byte builders.
+//   2. Re-export JSON object record serializer.
+//   3. Re-export command-line usage and help documentation.
+
+import "render_path.oo";
+import "render_json.oo";
+import "render_help.oo";

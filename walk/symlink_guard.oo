@@ -1,0 +1,29 @@
+// # Symlink Guard - Cycle Prevention for Tree Traversal
+//
+// Logline: Detects directory symlinks to prevent infinite cycles during traversal.
+//
+// Setup: Requires FsReadCap. Inspects inode and size properties of directory entries.
+//
+// Beats:
+//   1. Compare entry size with directory target size.
+//   2. Compare filesystem stamp size with link metadata size.
+//   3. Return boolean determining whether path is a directory symlink.
+
+import "std/fs/os/fs.oo";
+
+pub fn is_directory_symlink(fs: &FsReadCap, path: String) -> Bool {
+    let link_sz: Int = fs_file_size(fs, path);
+    let target_sz: Int = fs_file_size(fs, path + "/.");
+    if link_sz != target_sz {
+        return true;
+    }
+    let stamp: String = oo_file_stamp(fs, path);
+    let colon: Int = str_index_of(stamp, ":");
+    if colon > 0 {
+        let stamp_sz_str: String = str_slice(stamp, 0, colon);
+        if stamp_sz_str != to_string(link_sz) {
+            return true;
+        }
+    }
+    return false;
+}

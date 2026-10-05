@@ -1,0 +1,84 @@
+// # oofind Entry Point
+//
+// Logline: Argument gate and pipeline orchestrator for capability-bounded file finding.
+//
+// Setup: Requires FsReadCap for file access and ProcessCap to set exit status.
+//
+// Beats:
+//   1. Handle --help, --version, and --mcp early.
+//   2. Traverse requested roots, apply criteria filters, and render matches.
+//   3. Set POSIX exit code via ProcessCap.
+
+import "std/fs/os/fs.oo";
+import "walk/anchor.oo";
+import "match/anchor.oo";
+import "render/anchor.oo";
+import "ipc/anchor.oo";
+
+pub fn main(fs: &FsReadCap, proc_cap: &ProcessCap, args: List[String]) -> Result[Int, String] {
+    let opts: FindOpts = parse_cli_args(args);
+
+    if opts.help_mode {
+        print(render_help());
+        return Ok(0);
+    }
+    if opts.version_mode {
+        print("oofind 0.1.0 (openOODA sovereign find)\n");
+        return Ok(0);
+    }
+    if opts.mcp_mode {
+        run_mcp_server(fs);
+        return Ok(0);
+    }
+
+    if chars_len(opts.error_msg) > 0 {
+        print("oofind: " + opts.error_msg + "\nTry 'oofind --help' for more information.\n");
+        process_exit(2);
+        return Ok(2);
+    }
+
+    let n_roots: Int = list_len(opts.roots);
+    let mut any_error: Bool = false;
+    let mut total_matches: Int = 0;
+
+    let mut i: Int = 0;
+    while i < n_roots {
+        let root: String = list_get(opts.roots, i);
+        let exists: Bool = fs_is_dir(fs, root) || (fs_file_size(fs, root) >= 0);
+
+        if !exists {
+            print("oofind: " + root + ": No such file or directory\n");
+            any_error = true;
+        } else {
+            let entries: List[FoundEntry] = walk_hierarchy(
+                fs,
+                root,
+                opts.criteria.max_depth,
+                opts.respect_ignore,
+                opts.criteria.hidden
+            );
+            let matched: List[FoundEntry] = filter_entries(opts.criteria, entries);
+            let count: Int = list_len(matched);
+            total_matches = total_matches + count;
+
+            if opts.json_output {
+                render_entries_json(matched);
+            } else {
+                render_entries(matched, opts.print_null);
+            }
+        }
+        i = i + 1;
+    }
+
+    if any_error {
+        process_exit(2);
+        return Ok(2);
+    }
+
+    if opts.exit_code_mode && total_matches == 0 {
+        process_exit(1);
+        return Ok(1);
+    }
+
+    return Ok(0);
+}

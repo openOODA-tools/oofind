@@ -1,0 +1,35 @@
+// # Render Help - CLI Documentation Formatter
+//
+// Logline: Generates help and usage documentation for terminal display.
+//
+// Setup: Pure string formatter. Returns command line syntax and available options.
+//
+// Beats:
+//   1. Compose synopsis and command description.
+//   2. Detail matching predicates and traversal options.
+//   3. Detail output formatting and integration flags.
+
+pub fn render_help() -> String {
+    let mut h: String = "usage: oofind [paths...] [options]\n";
+    h = h + "Capability-bounded file finding utility for the openOODA ecosystem.\n\n";
+    h = h + "Matching:\n";
+    h = h + "  -name PATTERN        match basename against glob pattern\n";
+    h = h + "  -iname PATTERN       match basename against case-insensitive glob\n";
+    h = h + "  -type [f|d|l]        filter by kind: f (file), d (dir), l (symlink)\n";
+    h = h + "  -e, -extension EXT   filter by file extension (e.g. oo, txt)\n";
+    h = h + "  -empty               match empty files (0 bytes) or empty directories\n";
+    h = h + "  -size [+|-]N[k|M|G]  filter by file size\n\n";
+    h = h + "Traversing:\n";
+    h = h + "  -maxdepth NUM        maximum directory depth to descend\n";
+    h = h + "  -mindepth NUM        minimum depth required to emit entry\n";
+    h = h + "  -hidden, --hidden    include hidden files and directories\n";
+    h = h + "  --no-ignore          do not respect .gitignore rules\n\n";
+    h = h + "Output:\n";
+    h = h + "  -print0              delimit output entries by NUL (\\0)\n";
+    h = h + "  --json               emit results as JSON Lines records\n";
+    h = h + "  --exit-code          exit 0 on matches found, 1 on no matches found\n";
+    h = h + "  --mcp                run in Model Context Protocol mode over stdio\n";
+    h = h + "  -h, --help           display this help and exit\n";
+    h = h + "  -v, -V, --version    output version information and exit\n";
+    return h;
+}

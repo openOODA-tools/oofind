@@ -1,0 +1,15 @@
+// # IPC Subsystem Anchor
+//
+// Logline: Subsystem map re-exporting CLI options parsing and MCP stdio server.
+//
+// Setup: Pure shim. Re-exports argument parsing, JSON serialization, and agent server.
+//
+// Beats:
+//   1. Re-export options definition and argument parser.
+//   2. Re-export JSON field extractors and string encoder.
+//   3. Re-export Model Context Protocol stdio server.
+
+import "find_opts.oo";
+import "json_field.oo";
+import "parse_args.oo";
+import "mcp_serve.oo";

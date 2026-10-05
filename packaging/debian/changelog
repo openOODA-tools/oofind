@@ -1,0 +1,5 @@
+oofind (0.1.0-1) unstable; urgency=medium
+
+  * Initial release: capability-bounded file finding utility in openOODA.
+
+ -- openOODA-tools <ops@openooda.org>  Mon, 05 Oct 2026 00:00:00 +0000

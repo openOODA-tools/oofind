@@ -1,0 +1,34 @@
+// # Render Path - Stream Output Formatter
+//
+// Logline: Formats found entry paths to stdout using newline or NUL delimiters.
+//
+// Setup: Pure output rendering over discovered entry streams.
+//
+// Beats:
+//   1. Construct NUL delimiter string for xargs integration.
+//   2. Format single entry path with chosen delimiter.
+//   3. Render entry streams directly to stdout.
+
+import "walk/found_entry.oo";
+
+pub fn nul_byte() -> String {
+    return bytes_to_str(bytes_push(bytes_new(), 0));
+}
+
+pub fn render_entry_path(entry: FoundEntry, print_null: Bool) -> String {
+    if print_null {
+        return entry.path + nul_byte();
+    }
+    return entry.path + "\n";
+}
+
+pub fn render_entries(entries: List[FoundEntry], print_null: Bool) -> Int {
+    let n: Int = list_len(entries);
+    let mut i: Int = 0;
+    while i < n {
+        let entry: FoundEntry = list_get(entries, i);
+        print(render_entry_path(entry, print_null));
+        i = i + 1;
+    }
+    return n;
+}

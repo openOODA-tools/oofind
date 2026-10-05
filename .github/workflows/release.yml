@@ -1,0 +1,101 @@
+name: release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: oofind
+
+      - uses: actions/checkout@v4
+        with:
+          repository: openOODA/oodac
+          path: oodac
+
+      - uses: actions/checkout@v4
+        with:
+          repository: openOODA/oodar
+          path: oodar
+
+      - uses: actions/checkout@v4
+        with:
+          repository: openOODA/std
+          path: std
+
+      - name: Require compiler and clang
+        working-directory: ${{ github.workspace }}
+        run: |
+          test -x oodac/bin/oodac || chmod +x oodac/bin/oodac
+          if ! command -v clang >/dev/null; then sudo apt-get update && sudo apt-get install -y clang; fi
+          command -v clang >/dev/null || { echo "clang required for oodac build (LLVM IR + oodar)"; exit 1; }
+
+      - name: Build oodar libs
+        working-directory: ${{ github.workspace }}
+        run: make -C oodar/scripts -f Makefile modular
+
+      - name: Build, verify, and test
+        working-directory: ${{ github.workspace }}/oofind
+        env:
+          OODA_COMPILER: ${{ github.workspace }}/oodac/bin/oodac
+          OODA_FS_READDIR: ${{ github.workspace }}
+          OODA_FS_WRITEDIR: ${{ github.workspace }}
+          OODA_NO_JAIL: "1"
+        run: |
+          make verify
+          make build
+          make test
+
+      - name: Stage release asset
+        working-directory: ${{ github.workspace }}
+        run: |
+          cp oofind/dist/oofind oofind-linux-x86_64
+          sha256sum oofind-linux-x86_64 > oofind-linux-x86_64.sha256
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: oofind-linux-x86_64
+          path: |
+            oofind-linux-x86_64
+            oofind-linux-x86_64.sha256
+
+  package:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: oofind
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: oofind-linux-x86_64
+          path: ${{ github.workspace }}/dist
+
+      - name: Build packages (.deb & .rpm)
+        working-directory: ${{ github.workspace }}/oofind
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq rpm dpkg
+          mkdir -p dist
+          cp ${{ github.workspace }}/dist/oofind-linux-x86_64 dist/oofind
+          make package-deb
+          make package-rpm
+          cd dist
+          sha256sum *.deb *.rpm > packages.sha256
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ github.workspace }}/dist/oofind-linux-x86_64
+            ${{ github.workspace }}/dist/oofind-linux-x86_64.sha256
+            oofind/dist/*.deb
+            oofind/dist/*.rpm
+            oofind/dist/packages.sha256
