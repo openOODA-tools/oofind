@@ -156,7 +156,8 @@ test: $(BIN)
 
 # --- Packaging targets --------------------------------------------------------
 
-package-deb: $(BIN)
+package-deb:
+	@if [ ! -f $(BIN) ]; then $(MAKE) $(BIN); fi
 	@mkdir -p dist/deb-root/DEBIAN dist/deb-root/usr/bin
 	@sed "s/^Version:.*/Version: $(VERSION)-1/" packaging/debian/control.binary > dist/deb-root/DEBIAN/control
 	@cp $(BIN) dist/deb-root/usr/bin/oofind
@@ -165,7 +166,8 @@ package-deb: $(BIN)
 	@rm -rf dist/deb-root
 	@echo "built dist/oofind_$(VERSION)-1_amd64.deb"
 
-package-rpm: $(BIN)
+package-rpm:
+	@if [ ! -f $(BIN) ]; then $(MAKE) $(BIN); fi
 	@mkdir -p ~/rpmbuild/SOURCES ~/rpmbuild/SPECS ~/rpmbuild/RPMS
 	@cp $(BIN) ~/rpmbuild/SOURCES/oofind-linux-x86_64
 	@sed "s/^Version:.*/Version: $(VERSION)/" packaging/oofind.spec > ~/rpmbuild/SPECS/oofind.spec

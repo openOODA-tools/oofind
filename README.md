@@ -11,33 +11,40 @@ Part of [openOODA-tools](https://github.com/openOODA-tools).
 
 Zero runtime dependencies. The binary is pure native, statically linked with host libc.
 
-### Web Installer
+### Web (Universal)
 ```bash
 curl -fsSL https://openooda-tools.github.io/oofind/install.sh | bash
 ```
 
-#### Installer Options
+### APT (Debian / Ubuntu)
+```bash
+# Automated via installer
+curl -fsSL https://openooda-tools.github.io/oofind/install.sh | bash -s -- --apt
+
+# Or manual download from GitHub Releases
+curl -fsSL -O https://github.com/openOODA-tools/oofind/releases/download/v0.1.0/oofind_0.1.0-1_amd64.deb
+sudo dpkg -i oofind_0.1.0-1_amd64.deb
+```
+
+### DNF / RPM (Fedora / RHEL / CentOS)
+```bash
+# Automated via installer
+curl -fsSL https://openooda-tools.github.io/oofind/install.sh | bash -s -- --dnf
+
+# Or direct RPM install from GitHub Releases
+sudo dnf install https://github.com/openOODA-tools/oofind/releases/download/v0.1.0/oofind-0.1.0-1.x86_64.rpm
+```
+
+### Installer Options
 ```bash
 # Preview actions without modifying the host
 curl -fsSL https://openooda-tools.github.io/oofind/install.sh | bash -s -- --dry-run
 
 # Install to custom directory
-curl -fsSL https://openooda-tools.github.io/oofind/install.sh | bash -s -- --prefix /usr/bin
+curl -fsSL https://openooda-tools.github.io/oofind/install.sh | bash -s -- --prefix ~/.local/bin
 
-# Uninstall
+# Clean uninstall
 curl -fsSL https://openooda-tools.github.io/oofind/install.sh | bash -s -- --uninstall
-```
-
-### APT (Debian / Ubuntu)
-```bash
-# Install deb package from releases
-sudo dpkg -i oofind_0.1.0-1_amd64.deb
-```
-
-### DNF / RPM (Fedora / RHEL / openSUSE)
-```bash
-# Install rpm package from releases
-sudo dnf install oofind-0.1.0-1.x86_64.rpm
 ```
 
 ---
