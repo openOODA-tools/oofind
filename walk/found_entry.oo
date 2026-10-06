@@ -36,3 +36,8 @@ pub fn found_entry_is_hidden(entry: FoundEntry) -> Bool {
     }
     return false;
 }
+
+pub fn found_entry_list_empty() -> List[FoundEntry] {
+    return list_new();
+}
+

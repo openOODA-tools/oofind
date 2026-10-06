@@ -11,7 +11,7 @@
 
 import "walk/found_entry.oo";
 
-pub fn json_escape(s: String) -> String {
+fn render_json_escape(s: String) -> String {
     let n: Int = chars_len(s);
     let mut out: String = "";
     let mut i: Int = 0;
@@ -37,7 +37,7 @@ pub fn json_escape(s: String) -> String {
 
 pub fn render_entry_json(entry: FoundEntry) -> String {
     let kind: String = if entry.is_symlink { "symlink" } else if entry.is_dir { "dir" } else { "file" };
-    return "{\"path\":\"" + json_escape(entry.path) + "\",\"name\":\"" + json_escape(entry.name) + "\",\"type\":\"" + kind + "\",\"size\":" + to_string(entry.size) + ",\"depth\":" + to_string(entry.depth) + "}";
+    return "{\"path\":\"" + render_json_escape(entry.path) + "\",\"name\":\"" + render_json_escape(entry.name) + "\",\"type\":\"" + kind + "\",\"size\":" + to_string(entry.size) + ",\"depth\":" + to_string(entry.depth) + "}";
 }
 
 pub fn render_entries_json(entries: List[FoundEntry]) -> Int {

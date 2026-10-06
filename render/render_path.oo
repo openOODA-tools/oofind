@@ -1,15 +1,55 @@
 // # Render Path - Stream Output Formatter
 //
-// Logline: Formats found entry paths to stdout using newline or NUL delimiters.
+// Logline: Formats found entry paths to stdout using theme styling, newline or NUL delimiters.
 //
 // Setup: Pure output rendering over discovered entry streams.
 //
 // Beats:
 //   1. Construct NUL delimiter string for xargs integration.
-//   2. Format single entry path with chosen delimiter.
-//   3. Render entry streams directly to stdout.
+//   2. Apply theme color styling (shell_nav, shell_builtin, syntax_type).
+//   3. Format single entry path with chosen delimiter.
+//   4. Render entry streams directly to stdout.
 
 import "walk/found_entry.oo";
+import "render_theme.oo";
+
+pub fn color_shell_nav(text: String, enabled: Bool) -> String {
+    return theme_paint(theme_shell_nav(""), text, enabled);
+}
+
+pub fn color_shell_builtin(text: String, enabled: Bool) -> String {
+    return theme_paint(theme_shell_builtin(""), text, enabled);
+}
+
+pub fn color_syntax_type(text: String, enabled: Bool) -> String {
+    return theme_paint(theme_syntax_type(""), text, enabled);
+}
+
+pub fn is_executable_entry(entry: FoundEntry) -> Bool {
+    if entry.is_dir || entry.is_symlink { return false; }
+    let name: String = entry.name;
+    if str_ends_with(name, ".sh") || str_ends_with(name, ".bin") || str_ends_with(name, ".elf") || str_ends_with(name, ".exe") {
+        return true;
+    }
+    if str_index_of(entry.path, "/bin/") >= 0 || str_starts_with(entry.path, "bin/") || str_starts_with(entry.path, "./bin/") {
+        return true;
+    }
+    return false;
+}
+
+pub fn style_entry_path(entry: FoundEntry, enabled: Bool) -> String {
+    if !enabled { return entry.path; }
+    if entry.is_dir {
+        return color_shell_nav(entry.path, true);
+    }
+    if entry.is_symlink {
+        return color_syntax_type(entry.path, true);
+    }
+    if is_executable_entry(entry) {
+        return color_shell_builtin(entry.path, true);
+    }
+    return entry.path;
+}
 
 pub fn nul_byte() -> String {
     return bytes_to_str(bytes_push(bytes_new(), 0));
@@ -19,7 +59,7 @@ pub fn render_entry_path(entry: FoundEntry, print_null: Bool) -> String {
     if print_null {
         return entry.path + nul_byte();
     }
-    return entry.path + "\n";
+    return style_entry_path(entry, true) + "\n";
 }
 
 pub fn render_entries(entries: List[FoundEntry], print_null: Bool) -> Int {

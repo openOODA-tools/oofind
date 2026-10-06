@@ -12,3 +12,4 @@
 import "render_path.oo";
 import "render_json.oo";
 import "render_help.oo";
+import "render_theme.oo";
