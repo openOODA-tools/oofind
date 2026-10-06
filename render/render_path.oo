@@ -13,16 +13,16 @@
 import "walk/found_entry.oo";
 import "render_theme.oo";
 
-pub fn color_shell_nav(text: String, enabled: Bool) -> String {
-    return theme_paint(theme_shell_nav(""), text, enabled);
+pub fn color_shell_nav(text: String, theme: String, enabled: Bool) -> String {
+    return theme_paint(theme_shell_nav(theme), text, enabled);
 }
 
-pub fn color_shell_builtin(text: String, enabled: Bool) -> String {
-    return theme_paint(theme_shell_builtin(""), text, enabled);
+pub fn color_shell_builtin(text: String, theme: String, enabled: Bool) -> String {
+    return theme_paint(theme_shell_builtin(theme), text, enabled);
 }
 
-pub fn color_syntax_type(text: String, enabled: Bool) -> String {
-    return theme_paint(theme_syntax_type(""), text, enabled);
+pub fn color_syntax_type(text: String, theme: String, enabled: Bool) -> String {
+    return theme_paint(theme_syntax_type(theme), text, enabled);
 }
 
 pub fn is_executable_entry(entry: FoundEntry) -> Bool {
@@ -37,16 +37,16 @@ pub fn is_executable_entry(entry: FoundEntry) -> Bool {
     return false;
 }
 
-pub fn style_entry_path(entry: FoundEntry, enabled: Bool) -> String {
+pub fn style_entry_path(entry: FoundEntry, theme: String, enabled: Bool) -> String {
     if !enabled { return entry.path; }
     if entry.is_dir {
-        return color_shell_nav(entry.path, true);
+        return color_shell_nav(entry.path, theme, true);
     }
     if entry.is_symlink {
-        return color_syntax_type(entry.path, true);
+        return color_syntax_type(entry.path, theme, true);
     }
     if is_executable_entry(entry) {
-        return color_shell_builtin(entry.path, true);
+        return color_shell_builtin(entry.path, theme, true);
     }
     return entry.path;
 }
@@ -55,19 +55,19 @@ pub fn nul_byte() -> String {
     return bytes_to_str(bytes_push(bytes_new(), 0));
 }
 
-pub fn render_entry_path(entry: FoundEntry, print_null: Bool) -> String {
+pub fn render_entry_path(entry: FoundEntry, print_null: Bool, theme: String) -> String {
     if print_null {
         return entry.path + nul_byte();
     }
-    return style_entry_path(entry, true) + "\n";
+    return style_entry_path(entry, theme, true) + "\n";
 }
 
-pub fn render_entries(entries: List[FoundEntry], print_null: Bool) -> Int {
+pub fn render_entries(entries: List[FoundEntry], print_null: Bool, theme: String) -> Int {
     let n: Int = list_len(entries);
     let mut i: Int = 0;
     while i < n {
         let entry: FoundEntry = list_get(entries, i);
-        print(render_entry_path(entry, print_null));
+        print(render_entry_path(entry, print_null, theme));
         i = i + 1;
     }
     return n;

@@ -15,7 +15,7 @@ import "match/anchor.oo";
 import "render/anchor.oo";
 import "ipc/anchor.oo";
 
-pub fn main(fs: &FsReadCap, proc_cap: &ProcessCap, args: List[String]) -> Result[Int, String] {
+pub fn main(fs: &FsReadCap, proc_cap: &ProcessCap, env: &EnvCap, args: List[String]) -> Result[Int, String] {
     let opts: FindOpts = parse_cli_args(args);
 
     if opts.help_mode {
@@ -37,6 +37,7 @@ pub fn main(fs: &FsReadCap, proc_cap: &ProcessCap, args: List[String]) -> Result
         return Ok(2);
     }
 
+    let theme: String = resolve_find_theme(fs, env);
     let n_roots: Int = list_len(opts.roots);
     let mut any_error: Bool = false;
     let mut total_matches: Int = 0;
@@ -64,7 +65,7 @@ pub fn main(fs: &FsReadCap, proc_cap: &ProcessCap, args: List[String]) -> Result
             if opts.json_output {
                 render_entries_json(matched);
             } else {
-                render_entries(matched, opts.print_null);
+                render_entries(matched, opts.print_null, theme);
             }
         }
         i = i + 1;
