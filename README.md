@@ -16,23 +16,33 @@ Zero runtime dependencies. The binary is pure native, statically linked with hos
 curl -fsSL https://openooda-tools.github.io/oofind/install.sh | bash
 ```
 
-### APT (Debian / Ubuntu)
-```bash
-# Automated via installer
-curl -fsSL https://openooda-tools.github.io/oofind/install.sh | bash -s -- --apt
-
-# Or manual download from GitHub Releases
-curl -fsSL -O https://github.com/openOODA-tools/oofind/releases/download/v0.1.0/oofind_0.1.0-1_amd64.deb
-sudo dpkg -i oofind_0.1.0-1_amd64.deb
-```
-
 ### DNF / RPM (Fedora / RHEL / CentOS)
 ```bash
 # Automated via installer
 curl -fsSL https://openooda-tools.github.io/oofind/install.sh | bash -s -- --dnf
 
 # Or direct RPM install from GitHub Releases
-sudo dnf install https://github.com/openOODA-tools/oofind/releases/download/v0.1.0/oofind-0.1.0-1.x86_64.rpm
+sudo dnf install https://github.com/openOODA-tools/oofind/releases/download/v0.2.0/oofind-0.2.0-1.x86_64.rpm
+```
+
+### DEB / APT (Debian / Ubuntu)
+```bash
+# Automated via installer
+curl -fsSL https://openooda-tools.github.io/oofind/install.sh | bash -s -- --deb
+
+# Or manual download from GitHub Releases
+curl -fsSL -O https://github.com/openOODA-tools/oofind/releases/download/v0.2.0/oofind_0.2.0-1_amd64.deb
+sudo dpkg -i oofind_0.2.0-1_amd64.deb
+```
+
+### PKGBUILD / Pacman (Arch Linux / Manjaro)
+```bash
+# Automated via installer
+curl -fsSL https://openooda-tools.github.io/oofind/install.sh | bash -s -- --pkgbuild
+
+# Or build manually using makepkg
+curl -fsSL -O https://openooda-tools.github.io/oofind/PKGBUILD
+makepkg -si
 ```
 
 ### Installer Options

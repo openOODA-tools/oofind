@@ -23,7 +23,7 @@ pub fn main(fs: &FsReadCap, proc_cap: &ProcessCap, env: &EnvCap, args: List[Stri
         return Ok(0);
     }
     if opts.version_mode {
-        print("oofind 0.1.0 (openOODA sovereign find)\n");
+        print("oofind 0.2.0 (openOODA sovereign find)\n");
         return Ok(0);
     }
     if opts.mcp_mode {

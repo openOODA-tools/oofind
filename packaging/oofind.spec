@@ -1,5 +1,5 @@
 Name:           oofind
-Version:        0.1.0
+Version:        0.2.0
 Release:        1%{?dist}
 Summary:        Capability-bounded file finding utility
 License:        ASL 2.0
@@ -21,5 +21,8 @@ install -m 0755 %{SOURCE0} %{buildroot}/usr/bin/oofind
 /usr/bin/oofind
 
 %changelog
+* Tue Oct 06 2026 openOODA-tools <ops@openooda.org> - 0.2.0-1
+- Arch Linux PKGBUILD support, enhanced multi-distribution installers
+
 * Mon Oct 05 2026 openOODA-tools <ops@openooda.org> - 0.1.0-1
 - Initial sovereign release: recursive traversal, glob matching, -print0, --json, MCP stdio server

@@ -8,8 +8,9 @@
 #
 # Options:
 #   --prefix <dir>   Installation directory for standalone binary (default: /usr/local/bin or ~/.local/bin)
-#   --apt            Download and install Debian package (.deb) via apt/dpkg
-#   --dnf            Download and install RPM package (.rpm) via dnf
+#   --deb, --apt     Download and install Debian package (.deb) via apt/dpkg
+#   --dnf, --rpm     Download and install RPM package (.rpm) via dnf
+#   --pkgbuild, --arch Download and install Arch Linux package via makepkg/PKGBUILD
 #   --dry-run        Simulate installation without touching the filesystem
 #   --uninstall      Remove oofind from standard system paths
 #   -h, --help       Show this help message
@@ -19,8 +20,9 @@ set -eu
 
 REPO="openOODA-tools/oofind"
 GITHUB_URL="https://github.com/${REPO}"
-VERSION_PIN="v0.1.0"
-RAW_VERSION="0.1.0"
+CANONICAL_URL="https://openooda-tools.github.io/oofind"
+VERSION_PIN="v0.2.0"
+RAW_VERSION="0.2.0"
 
 if [ -t 1 ] && [ "${NO_COLOR:-}" = "" ] && [ "${TERM:-dumb}" != "dumb" ]; then
     CYAN="\033[38;5;51m"
@@ -42,8 +44,9 @@ step() { say ""; say " ${CYAN}${BOLD}$*${RESET}"; }
 PREFIX=""
 DRY_RUN=0
 UNINSTALL=0
-INSTALL_APT=0
+INSTALL_DEB=0
 INSTALL_DNF=0
+INSTALL_ARCH=0
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -51,12 +54,16 @@ while [ $# -gt 0 ]; do
             PREFIX="$2"
             shift 2
             ;;
-        --apt|--deb)
-            INSTALL_APT=1
+        --deb|--apt)
+            INSTALL_DEB=1
             shift
             ;;
         --dnf|--rpm)
             INSTALL_DNF=1
+            shift
+            ;;
+        --pkgbuild|--arch)
+            INSTALL_ARCH=1
             shift
             ;;
         --dry-run)
@@ -70,11 +77,12 @@ while [ $# -gt 0 ]; do
         -h|--help)
             say "Usage: install.sh [options]"
             say "Options:"
-            say "  --prefix <dir>   Target installation directory for standalone binary"
-            say "  --apt, --deb     Install Debian package via apt/dpkg"
-            say "  --dnf, --rpm     Install RPM package via dnf/rpm"
-            say "  --dry-run        Simulate installation without disk writes"
-            say "  --uninstall      Remove oofind from installation path"
+            say "  --prefix <dir>       Target installation directory for standalone binary"
+            say "  --deb, --apt         Install Debian package (.deb) via apt/dpkg"
+            say "  --dnf, --rpm         Install RPM package (.rpm) via dnf"
+            say "  --pkgbuild, --arch   Build and install Arch Linux package via PKGBUILD"
+            say "  --dry-run            Simulate installation without disk writes"
+            say "  --uninstall          Remove oofind from installation path"
             exit 0
             ;;
         *)
@@ -98,6 +106,12 @@ if [ "$UNINSTALL" -eq 1 ]; then
     elif command -v rpm >/dev/null 2>&1 && rpm -q oofind >/dev/null 2>&1; then
         sudo dnf remove -y oofind || sudo rpm -e oofind
         ok "Removed oofind RPM package"
+    elif command -v pacman >/dev/null 2>&1 && pacman -Q oofind-bin >/dev/null 2>&1; then
+        sudo pacman -R --noconfirm oofind-bin
+        ok "Removed oofind Arch package"
+    elif command -v pacman >/dev/null 2>&1 && pacman -Q oofind >/dev/null 2>&1; then
+        sudo pacman -R --noconfirm oofind
+        ok "Removed oofind Arch package"
     fi
 
     for p in /usr/local/bin/oofind "${HOME}/.local/bin/oofind" /usr/bin/oofind; do
@@ -109,9 +123,9 @@ if [ "$UNINSTALL" -eq 1 ]; then
     exit 0
 fi
 
-# --- APT / DEB Installation ---
-if [ "$INSTALL_APT" -eq 1 ]; then
-    step "Installing oofind via APT/dpkg ($VERSION_PIN)"
+# --- DEB / APT Installation ---
+if [ "$INSTALL_DEB" -eq 1 ]; then
+    step "Installing oofind via DEB/apt ($VERSION_PIN)"
     DEB_NAME="oofind_${RAW_VERSION}-1_amd64.deb"
     DEB_URL="${GITHUB_URL}/releases/download/${VERSION_PIN}/${DEB_NAME}"
     if [ "$DRY_RUN" -eq 1 ]; then
@@ -151,7 +165,40 @@ if [ "$INSTALL_DNF" -eq 1 ]; then
     exit 0
 fi
 
-# --- Standalone Binary Installation ---
+# --- Arch Linux / PKGBUILD Installation ---
+if [ "$INSTALL_ARCH" -eq 1 ]; then
+    step "Installing oofind via PKGBUILD ($VERSION_PIN)"
+    if [ "$DRY_RUN" -eq 1 ]; then
+        say "  [dry-run] Would fetch PKGBUILD and execute makepkg -si"
+        ok "Dry run complete."
+        exit 0
+    fi
+    if ! command -v makepkg >/dev/null 2>&1; then
+        err "makepkg not found. Install base-devel on Arch Linux or install the standalone binary."
+        exit 1
+    fi
+    BUILD_DIR="$(mktemp -d)"
+    if [ -f "./packaging/arch/PKGBUILD" ]; then
+        cp "./packaging/arch/PKGBUILD" "$BUILD_DIR/PKGBUILD"
+    elif command -v curl >/dev/null 2>&1; then
+        curl -fsSL "${CANONICAL_URL}/PKGBUILD" -o "$BUILD_DIR/PKGBUILD" || \
+        curl -fsSL "${GITHUB_URL}/raw/main/packaging/arch/PKGBUILD" -o "$BUILD_DIR/PKGBUILD"
+    elif command -v wget >/dev/null 2>&1; then
+        wget -qO "$BUILD_DIR/PKGBUILD" "${CANONICAL_URL}/PKGBUILD" || \
+        wget -qO "$BUILD_DIR/PKGBUILD" "${GITHUB_URL}/raw/main/packaging/arch/PKGBUILD"
+    else
+        err "Neither curl nor wget available."
+        rm -rf "$BUILD_DIR"
+        exit 1
+    fi
+    (cd "$BUILD_DIR" && makepkg -si --noconfirm)
+    rm -rf "$BUILD_DIR"
+    ok "Installed oofind via PKGBUILD."
+    oofind --version
+    exit 0
+fi
+
+# --- Standalone Binary Installation (Default) ---
 resolve_prefix() {
     if [ -n "$PREFIX" ]; then
         return
@@ -192,7 +239,7 @@ else
     elif command -v wget >/dev/null 2>&1; then
         wget -qO "$TMP_BIN" "$DOWNLOAD_URL"
     else
-        err "Neither curl nor wget is available."
+        err "Neither curl nor wget available."
         exit 1
     fi
     chmod +x "$TMP_BIN"

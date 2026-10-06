@@ -18,7 +18,7 @@ OODA_COMPILER ?= $(firstword $(wildcard $(HOME)/.openooda/bin/oodac $(CURDIR)/..
 OODACODEX ?= $(HOME)/.openooda/northstar.oot
 OO_LIST_AMBIENT_QUOTA ?= 8589934592
 BIN := dist/oofind
-VERSION ?= 0.1.0
+VERSION ?= 0.2.0
 
 SRC := $(wildcard *.oo) $(wildcard */*.oo)
 

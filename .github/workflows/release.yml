@@ -99,3 +99,4 @@ jobs:
             oofind/dist/*.deb
             oofind/dist/*.rpm
             oofind/dist/packages.sha256
+            oofind/packaging/arch/PKGBUILD
