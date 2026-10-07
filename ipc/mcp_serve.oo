@@ -86,7 +86,7 @@ fn handle_mcp_request(fs: &FsReadCap, req: String) -> String {
     let id: String = if chars_len(raw_id) == 0 { "null" } else { raw_id };
 
     if method == "initialize" {
-        return "{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":{\"protocolVersion\":\"2024-11-05\",\"capabilities\":{\"tools\":{}},\"serverInfo\":{\"name\":\"oofind\",\"version\":\"0.2.0\"}}}";
+        return "{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":{\"protocolVersion\":\"2024-11-05\",\"capabilities\":{\"tools\":{}},\"serverInfo\":{\"name\":\"oofind\",\"version\":\"0.2.1\"}}}";
     }
     if method == "notifications/initialized" {
         return "";
