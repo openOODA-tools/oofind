@@ -18,7 +18,7 @@ OODA_COMPILER ?= $(firstword $(wildcard $(HOME)/.openooda/bin/oodac $(CURDIR)/..
 OODACODEX ?= $(HOME)/.openooda/northstar.oot
 OO_LIST_AMBIENT_QUOTA ?= 8589934592
 BIN := dist/oofind
-VERSION ?= 0.2.0
+VERSION ?= 0.2.1
 
 SRC := $(wildcard *.oo) $(wildcard */*.oo)
 
@@ -162,6 +162,8 @@ package-deb:
 	@sed "s/^Version:.*/Version: $(VERSION)-1/" packaging/debian/control.binary > dist/deb-root/DEBIAN/control
 	@cp $(BIN) dist/deb-root/usr/bin/oofind
 	@chmod 0755 dist/deb-root/usr/bin/oofind
+	@cp uninstall.sh dist/deb-root/usr/bin/oofind-uninstall
+	@chmod 0755 dist/deb-root/usr/bin/oofind-uninstall
 	@dpkg-deb --build --root-owner-group dist/deb-root dist/oofind_$(VERSION)-1_amd64.deb
 	@rm -rf dist/deb-root
 	@echo "built dist/oofind_$(VERSION)-1_amd64.deb"
@@ -170,12 +172,18 @@ package-rpm:
 	@if [ ! -f $(BIN) ]; then $(MAKE) $(BIN); fi
 	@mkdir -p ~/rpmbuild/SOURCES ~/rpmbuild/SPECS ~/rpmbuild/RPMS
 	@cp $(BIN) ~/rpmbuild/SOURCES/oofind-linux-x86_64
+	@cp uninstall.sh ~/rpmbuild/SOURCES/uninstall.sh
 	@sed "s/^Version:.*/Version: $(VERSION)/" packaging/oofind.spec > ~/rpmbuild/SPECS/oofind.spec
 	@rpmbuild -bb ~/rpmbuild/SPECS/oofind.spec
 	@cp ~/rpmbuild/RPMS/x86_64/oofind-$(VERSION)*.rpm dist/
 	@echo "built dist RPM package"
 
-package: package-deb package-rpm
+package-arch:
+	@bash -n packaging/arch/PKGBUILD
+	@cp packaging/arch/PKGBUILD packaging/PKGBUILD
+	@echo "validated packaging/arch/PKGBUILD and packaging/PKGBUILD"
+
+package: package-deb package-rpm package-arch
 
 install: $(BIN)
 	@./install.sh
