@@ -22,7 +22,7 @@ VERSION ?= 0.2.0
 
 SRC := $(wildcard *.oo) $(wildcard */*.oo)
 
-.PHONY: all build check line-cap file-law academy density verify test package-deb package-rpm package clean
+.PHONY: all build check line-cap file-law academy density verify test package-deb package-rpm package install uninstall clean
 
 all: verify build test
 
@@ -176,6 +176,12 @@ package-rpm:
 	@echo "built dist RPM package"
 
 package: package-deb package-rpm
+
+install: $(BIN)
+	@./install.sh
+
+uninstall:
+	@./install.sh --uninstall
 
 clean:
 	@rm -rf dist .ooda-cache

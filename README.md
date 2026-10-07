@@ -52,9 +52,30 @@ curl -fsSL https://openooda-tools.github.io/oofind/install.sh | bash -s -- --dry
 
 # Install to custom directory
 curl -fsSL https://openooda-tools.github.io/oofind/install.sh | bash -s -- --prefix ~/.local/bin
+```
 
-# Clean uninstall
+### Clean Uninstall
+
+`oofind` includes a built-in clean uninstaller that automatically detects and cleans up standalone binaries, system packages (`.deb`, `.rpm`, Arch), companion tools, shell completions, service units, and optional configs:
+
+```bash
+# 1. Via companion CLI (situated automatically alongside oofind):
+oofind-uninstall
+
+# 2. Standalone web uninstaller:
+curl -fsSL https://openooda-tools.github.io/oofind/uninstall.sh | bash
+
+# 3. Via universal installer flag:
 curl -fsSL https://openooda-tools.github.io/oofind/install.sh | bash -s -- --uninstall
+
+# 4. Purge user configuration (~/.config/oofind) and cache (~/.cache/oofind) as well:
+oofind-uninstall --purge
+
+# Preview what would be removed without making changes:
+oofind-uninstall --dry-run
+
+# From local repository clone:
+make uninstall
 ```
 
 ---

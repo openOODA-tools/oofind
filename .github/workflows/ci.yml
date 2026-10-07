@@ -62,3 +62,11 @@ jobs:
           sudo dpkg -i dist/oofind_*_amd64.deb
           /usr/bin/oofind --version
           /usr/bin/oofind qa/fixtures -name "*.txt"
+
+      - name: Verify clean uninstaller
+        working-directory: ${{ github.workspace }}/oofind
+        run: |
+          ./install.sh --dry-run --uninstall
+          ./uninstall.sh --yes
+          test ! -f /usr/bin/oofind
+          dpkg -s oofind && exit 1 || echo "Clean uninstallation verified"
